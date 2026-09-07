@@ -1,9 +1,12 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { BookOpen, Trophy, GraduationCap, Flame, ArrowRight, CheckCircle2, XCircle, TrendingUp, Star, Target, Calendar } from 'lucide-react';
-import { getLearnedVocabulary, getAverageScore, getGrammarProgress, updateDailyStreak, getQuizHistory, STORAGE_KEYS } from '@/lib/storage';
+import { BookOpen, Trophy, GraduationCap, Headphones, FileText, PenLine, Flame, ArrowRight, CheckCircle2, XCircle, TrendingUp, Star, Target, Calendar } from 'lucide-react';
+import { getLearnedVocabulary, getAverageScore, getGrammarProgress, getListeningProgress, getReadingProgress, updateDailyStreak, getQuizHistory, STORAGE_KEYS } from '@/lib/storage';
 import { VOCABULARY, TOTAL_VOCAB } from '@/data/vocabulary';
+import { TOTAL_GRAMMAR_TOPICS } from '@/data/grammar';
+import { TOTAL_LISTENING_ITEMS } from '@/data/listening';
+import { TOTAL_READING_ARTICLES } from '@/data/reading';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import Icon from '@/components/ui/AppIcon';
 
@@ -27,6 +30,8 @@ export default function DashboardClient() {
   const [learnedCount, setLearnedCount] = useState(0);
   const [avgScore, setAvgScore] = useState(0);
   const [grammarCount, setGrammarCount] = useState(0);
+  const [listeningCount, setListeningCount] = useState(0);
+  const [readingCount, setReadingCount] = useState(0);
   const [streak, setStreak] = useState(0);
   const [quizHistory, setQuizHistory] = useState<{ name: string; score: number }[]>([]);
   const [challenge, setChallenge] = useState<DailyChallengeState>({
@@ -44,6 +49,8 @@ export default function DashboardClient() {
     setLearnedCount(getLearnedVocabulary().length);
     setAvgScore(getAverageScore());
     setGrammarCount(getGrammarProgress().length);
+    setListeningCount(getListeningProgress().length);
+    setReadingCount(getReadingProgress().length);
     const newStreak = updateDailyStreak();
     setStreak(newStreak);
 
@@ -103,11 +110,11 @@ export default function DashboardClient() {
       id: 'stat-grammar',
       label: 'Topik Grammar',
       value: grammarCount,
-      total: 15,
+      total: TOTAL_GRAMMAR_TOPICS,
       icon: GraduationCap,
       color: 'text-success',
       bg: 'bg-green-50',
-      trend: `${15 - grammarCount} topik tersisa`,
+      trend: `${TOTAL_GRAMMAR_TOPICS - grammarCount} topik tersisa`,
       trendUp: grammarCount > 0,
     },
     {
@@ -125,6 +132,10 @@ export default function DashboardClient() {
 
   const quickActions = [
     { id: 'qa-vocab', label: 'Belajar Kosakata', desc: 'Pelajari kata-kata baru', href: '/vocabulary', icon: BookOpen, gradient: 'gradient-primary' },
+    { id: 'qa-grammar', label: 'Belajar Grammar', desc: 'Kuasai tata bahasa Inggris', href: '/grammar', icon: GraduationCap, gradient: 'gradient-success' },
+    { id: 'qa-listening', label: 'Latihan Listening', desc: 'Dengarkan dan pahami', href: '/listening', icon: Headphones, gradient: 'gradient-purple' },
+    { id: 'qa-reading', label: 'Latihan Reading', desc: 'Baca artikel bertingkat', href: '/reading', icon: FileText, gradient: 'gradient-info' },
+    { id: 'qa-writing', label: 'Latihan Writing', desc: 'Asah kemampuan menulis', href: '/writing', icon: PenLine, gradient: 'gradient-rose' },
     { id: 'qa-quiz', label: 'Mulai Kuis', desc: 'Uji kemampuanmu', href: '/quiz', icon: Trophy, gradient: 'gradient-warning' },
   ];
 
@@ -256,28 +267,27 @@ export default function DashboardClient() {
         {/* Quick Actions */}
         <div className="flex flex-col gap-4">
           <h2 className="text-base font-semibold text-foreground">Aksi Cepat</h2>
-          {quickActions.map(action => {
-            const Icon = action.icon;
-            return (
-              <Link
-                key={action.id}
-                href={action.href}
-                className={`
-                  flex items-center gap-4 p-4 rounded-xl text-white ${action.gradient}
-                  hover:opacity-90 active:scale-95 transition-all duration-150 card-shadow-md
-                `}
-              >
-                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Icon size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm">{action.label}</p>
-                  <p className="text-xs opacity-80">{action.desc}</p>
-                </div>
-                <ArrowRight size={18} className="opacity-70 flex-shrink-0" />
-              </Link>
-            );
-          })}
+          <div className="grid grid-cols-2 gap-2.5">
+            {quickActions.map(action => {
+              const Icon = action.icon;
+              return (
+                <Link
+                  key={action.id}
+                  href={action.href}
+                  title={action.desc}
+                  className={`
+                    flex flex-col items-start gap-2 p-3 rounded-xl text-white ${action.gradient}
+                    hover:opacity-90 active:scale-95 transition-all duration-150 card-shadow-md
+                  `}
+                >
+                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Icon size={16} />
+                  </div>
+                  <p className="font-semibold text-xs leading-tight">{action.label}</p>
+                </Link>
+              );
+            })}
+          </div>
 
           {/* Progress Summary */}
           <div className="bg-card border border-border rounded-xl p-4 card-shadow">
@@ -298,10 +308,28 @@ export default function DashboardClient() {
               <div>
                 <div className="flex justify-between text-xs text-muted-foreground mb-1">
                   <span>Grammar</span>
-                  <span className="font-medium text-foreground">{grammarCount}/15</span>
+                  <span className="font-medium text-foreground">{grammarCount}/{TOTAL_GRAMMAR_TOPICS}</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-success rounded-full" style={{ width: `${Math.round((grammarCount / 15) * 100)}%` }} />
+                  <div className="h-full bg-success rounded-full" style={{ width: `${Math.round((grammarCount / TOTAL_GRAMMAR_TOPICS) * 100)}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span>Listening</span>
+                  <span className="font-medium text-foreground">{listeningCount}/{TOTAL_LISTENING_ITEMS}</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-purple-600 rounded-full" style={{ width: `${Math.round((listeningCount / TOTAL_LISTENING_ITEMS) * 100)}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span>Reading</span>
+                  <span className="font-medium text-foreground">{readingCount}/{TOTAL_READING_ARTICLES}</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-sky-500 rounded-full" style={{ width: `${Math.round((readingCount / TOTAL_READING_ARTICLES) * 100)}%` }} />
                 </div>
               </div>
             </div>
